@@ -121,8 +121,6 @@ with fooddiary_tab:
                     "player_id": player_id,
                     "meal_date": int(meal_date.strftime("%Y%m%d")),
                     "day_type": day_type,
-                    "weight_before": weight_before,
-                    "weight_after": weight_after,
                     "meal_type": meal_type,
                     "meal_elements": st.session_state.food_items
                 }
