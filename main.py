@@ -30,21 +30,21 @@ def get_player_ids():
 # Constants and UI Options
 # ------------------------
 
-MEAL_TYPES = ['Ontbijt', 'Middag eten', 'Avond eten', 'Tussendoortje']
+MEAL_TYPES = ['Breakfast', 'Lunch', 'Dinner', 'Snack']
 AMOUNT_UNITS = ['gr', 'ml', 'tas', 'snede', 'el', 'kl', 'stuk']
-DAY_TYPES_FOOD = ['Wedstrijd', 'Training', 'Rust']
+DAY_TYPES_FOOD = ['Match', 'Training', 'Rest']
 DAY_TYPES_WEIGHT = ['Wedstrijd', 'Training']
 
 # ----------------------------
 # Streamlit App Configuration
 # ----------------------------
 
-st.set_page_config(page_title="SK Beveren Voedingsdagboek", page_icon=":hamburger:", layout="centered")
+st.set_page_config(page_title="Food diary", page_icon=":hamburger:", layout="centered")
 # st.image("images/beveren_logo.png", width=150)
-st.title('SK Beveren Voedingsdagboek')
+st.title('Food diary')
 
 # Setup tabs
-fooddiary_tab, weightregistration_tab, info_tab = st.tabs(["Voedingsdagboek", "Gewichtsregistratie", "Extra informatie"])
+fooddiary_tab, weightregistration_tab, info_tab = st.tabs(["Food diary", "Weight registration", "Extra information"])
 
 # ------------------------
 # Tab 1: Food Diary Entry
@@ -53,22 +53,22 @@ fooddiary_tab, weightregistration_tab, info_tab = st.tabs(["Voedingsdagboek", "G
 with fooddiary_tab:
 
     # Dropdown to select player ID
-    player_id = st.selectbox(   'Speler ID', 
+    player_id = st.selectbox(   'Player ID', 
                                 options=get_player_ids(), 
                                 index=get_player_ids().tolist().index(st.session_state.get('preserve_player_id')) if 'preserve_player_id' in st.session_state else None,
-                                placeholder="Selecteer je Speler ID ...",
+                                placeholder="Select your player ID ...",
                                 key='fooddiary_playerid')
 
     # Date input for the meal
-    meal_date = st.date_input('Datum', value=datetime.today(), max_value=datetime.today(), format="DD/MM/YYYY", key='fooddiary_date')
+    meal_date = st.date_input('Date', value=datetime.today(), max_value=datetime.today(), format="DD/MM/YYYY", key='fooddiary_date')
 
     # Day type input
-    day_type = st.radio('Type Dag', DAY_TYPES_FOOD, horizontal=True, index=None, key='fooddiary_daytype')
+    day_type = st.radio('Day type', DAY_TYPES_FOOD, horizontal=True, index=None, key='fooddiary_daytype')
 
     # Meal type selection
-    meal_type = st.radio('Type Maaltijd', MEAL_TYPES, horizontal=True, index=None)
+    meal_type = st.radio('Meal type', MEAL_TYPES, horizontal=True, index=None)
 
-    st.subheader('Elementen van de maaltijd:')
+    st.subheader('Meal elements:')
 
     # Initialize session state for food items
     if 'food_items' not in st.session_state:
@@ -79,22 +79,22 @@ with fooddiary_tab:
         col1, col2, col3, col4 = st.columns([1, 3, 1, 1])
 
         with col1:
-            time = st.time_input('Tijdstip')
+            time = st.time_input('Time')
         with col2:
-            food_product = st.text_input('Voedingsproduct')
+            food_product = st.text_input('Food element')
         with col3:
-            amount_value = st.number_input('Hoeveelheid', min_value=1, step=1)
+            amount_value = st.number_input('Amount', min_value=1, step=1)
         with col4:
-            amount_unit = st.selectbox('Eenheid', options=AMOUNT_UNITS)
+            amount_unit = st.selectbox('Unit', options=AMOUNT_UNITS)
 
-        submit_button = st.form_submit_button("Voedingsproduct toevoegen", icon=":material/bakery_dining:")
+        submit_button = st.form_submit_button("Add food element", icon=":material/bakery_dining:")
 
         if submit_button:
             # Validate input
             if not food_product.strip():
-                st.warning("Voedingsproduct mag niet leeg zijn.")
+                st.warning("Food element can not be empty.")
             elif amount_value <= 0:
-                st.warning("Hoeveelheid moet groter zijn dan nul.")
+                st.warning("Amount has to be larger than 0.")
             else:
                 # Add food item to session state
                 st.session_state.food_items.append({
@@ -103,17 +103,17 @@ with fooddiary_tab:
                     'amount_value': amount_value,
                     'amount_unit': amount_unit
                 })
-                st.success('Voedingsproduct toegevoegd!')
+                st.success('Food element added!')
 
     # Display current food items
     if st.session_state.food_items:
-        st.write("Toegevoegde voedingsproducten:")
+        st.write("Added food elements:")
         st.dataframe(pd.DataFrame(st.session_state.food_items))
 
     # Final submission button to log the meal entry
-    if st.button('Maaltijd toevoegen', icon=":material/restaurant:"):
+    if st.button('Add meal', icon=":material/restaurant:"):
         if not st.session_state.food_items:
-            st.error("Je moet minstens één voedingsproduct toevoegen.")
+            st.error("You have to include at least one food element.")
         else:
             try:
                 # Create meal entry dictionary
@@ -129,14 +129,14 @@ with fooddiary_tab:
                 collection = connect_to_mongodb("meal_diary_entries")
                 collection.insert_one(new_meal_entry)
 
-                st.success("Uw maaltijd is toegevoegd.")
+                st.success("You meal has been added.")
                 st.balloons()
                 st.session_state.food_items = []  # Reset after submission
                 st.session_state['preserve_player_id'] = player_id
                 st.rerun()  # Clear form inputs
 
             except Exception as e:
-                st.error("Verbindingsfout. Maaltijd niet kunnen toevoegen.")
+                st.error("Connection error. Could not add the meal.")
                 st.exception(e)
 
 # -------------------------------
